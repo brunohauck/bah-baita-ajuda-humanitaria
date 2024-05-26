@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../../react-crud"
+		},
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../../resgate-digital/ju-v2/resgate-digital-app"
+		}
+	],
+	"settings": {}
+}
