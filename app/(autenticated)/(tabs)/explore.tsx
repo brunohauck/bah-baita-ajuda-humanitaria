@@ -31,7 +31,7 @@ export default function TabTwoScreen() {
   const fetchAddresses = async () => {
     try {
       const response = await fetch('https://66526a0f813d78e6d6d57914.mockapi.io/api/v1/address');
-      const data = await response.json();
+      const data = await response.json();setLocation
       setAddresses(data);
     } catch (error) {
       console.error('Error fetching addresses:', error);

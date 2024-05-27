@@ -1,23 +1,19 @@
-import { View, Image, Text, StyleSheet, Platform, ActivityIndicator } from 'react-native';
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator, Linking, Text } from 'react-native';
 import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 
 interface Address {
   latitude: number;
   longitude: number;
   address: string;
+  url: string;
 }
 
 const fetchAddresses = async (): Promise<Address[]> => {
   try {
     const response = await fetch('https://66526a0f813d78e6d6d57914.mockapi.io/api/v1/address');
     const data: Address[] = await response.json();
-    console.log('entrou no fetch ----<>-----')
-    console.log(data)
     return data;
   } catch (error) {
     console.error('Erro ao buscar dados:', error);
@@ -62,9 +58,11 @@ const findNearestAddress = (currentCoords: { latitude: number; longitude: number
 };
 
 export default function HomeScreen() {
+  const showMap = true;
   const [loading, setLoading] = useState(true);
   const [nearestAddress, setNearestAddress] = useState<Address | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [currentCoords, setCurrentCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     const fetchAndFindNearestAddress = async () => {
@@ -77,16 +75,17 @@ export default function HomeScreen() {
         }
 
         let location = await Location.getCurrentPositionAsync({});
-        const currentCoords = {
+        const coords = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         };
+        setCurrentCoords(coords);
 
         // Busca os dados da API
         const addresses = await fetchAddresses();
 
         // Encontra o endereço mais próximo
-        const nearest = findNearestAddress(currentCoords, addresses);
+        const nearest = findNearestAddress(coords, addresses);
         setNearestAddress(nearest);
       } catch (error) {
         setErrorMsg('Erro ao calcular o endereço mais próximo');
@@ -100,7 +99,7 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View>
+      <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
@@ -108,78 +107,61 @@ export default function HomeScreen() {
 
   if (errorMsg) {
     return (
-      <View>
+      <View style={styles.errorContainer}>
         <Text>{errorMsg}</Text>
       </View>
     );
   }
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Aqui vai aparecer o resultado
-        </ThemedText>
 
-      <View>
-          {nearestAddress ? (
-            <Text>Endereço mais próximo: {nearestAddress.address}</Text>
-          ) : (
-            <Text>Nenhum endereço encontrado</Text>
-          )}
-      </View>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  return (
+    <View style={styles.container}>
+      {showMap ? (
+      <>
+            {nearestAddress && currentCoords && (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: currentCoords.latitude,
+            longitude: currentCoords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        >
+          <Marker
+            coordinate={{
+              latitude: nearestAddress.latitude,
+              longitude: nearestAddress.longitude,
+            }}
+            title={nearestAddress.address}
+            onPress={() => Linking.openURL('https://docs.google.com/forms/d/1wh19xbDIJhROdJjn0gE4_epUrS8iKnKXwWhHqtaE_8g/prefill')}
+          />
+        </MapView>
+      )}
+      </>
+            ) : (
+              <Text>Mapa desativado para desenvolvimento</Text>
+            )}
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -1,15 +1,17 @@
 // screens/LoginScreen.tsx
+import { useAuth } from '@/app/AuthContext';
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
-import { useAuth } from './AuthContext.tsx';
 
 
-const LoginScreen: React.FC = () => {
+
+
+const Login2Screen: React.FC = () => {
   const { login } = useAuth();
 
   return (
     <View style={styles.container}>
-      <Text>Login Screen</Text>
+      <Text>Login Screen v2</Text>
       <Button title="Login" onPress={login} />
     </View>
   );
@@ -23,4 +25,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default Login2Screen;
